@@ -1,0 +1,88 @@
+﻿@using RestSharp
+@using System.Text.Json
+
+<h3>MusicSection</h3>
+<h1>Musics page</h1>
+<button @onclick="getMusics"> get Songs</button>
+@if (songs!=null)
+{
+	@foreach (Class1 s in songs)
+{
+	<p>@s.title</p>
+	<p>@s.releaseDate</p>
+	<p>@s.duration</p>
+	<p>@s.genre</p>
+	<br />
+		@foreach (Class2 artsong in artsont)
+		{
+			@if(s.id==artsong.song_Id){
+				@foreach (Artists a in artists)
+				{
+					@if (artsong.artist_Id == a.id)
+					{
+						<p>Artistname:</p>
+						<p>@a.artist_Name</p>
+					}
+
+}
+			}
+		}
+}
+}
+
+
+@code {
+	string searchValue = null;
+	Class1[] songs = null;
+	Class2[] songsArtists= null;
+	List<Class2> artsont = new List<Class2>();
+	List<Artists> artists = new List<Artists>();
+	public void getMusics()
+	{
+		var client = new RestClient("https://localhost:7002/api/Songs/Song");
+		var request = new RestRequest();
+		var response = client.Execute(request);
+		if (response != null)
+		{
+			songs = JsonSerializer.Deserialize<Class1 [] >(response.Content);
+		}
+		//https://localhost:7002/api/Artists_Songs/Artists_Songs/1
+		if (songs!=null)
+		{
+			for (var i=0; i<songs.Length; i++)
+			{
+
+				var client2 = new RestClient("https://localhost:7002/api/Artists_Songs/Artists_Songs/" + songs[i].id);
+				var request2 = new RestRequest();
+				var response2 = client2.Execute(request2);
+				if (response2 != null)
+				{
+					Class2 [] artsong = JsonSerializer.Deserialize<Class2[]>(response2.Content);
+					for (var x = 0; x < artsong.Length; x++)
+					{
+						artsont.Add(artsong[i]);
+					}
+						}
+					}
+		}
+			if (songsArtists!=null)
+			{
+				for (var i = 0; i < songsArtists.Length; i++)
+				{
+					var client3 = new RestClient("https://localhost:7002/api/Artists/Artists/" + songsArtists[i].artist_Id);
+					var request3 = new RestRequest();
+					var response3 = client3.Execute(request3);
+					if (response3 != null)
+					{
+						Artists artist = JsonSerializer.Deserialize<Artists>(response3.Content);
+						artists.Add(artist);
+					}
+				}
+				
+			}
+		
+		//searchValue = "hello";
+
+	}
+
+}
