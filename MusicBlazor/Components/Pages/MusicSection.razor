@@ -1,8 +1,48 @@
 ﻿@using RestSharp
 @using System.Text.Json
+@using System.Text
 
 <h3>MusicSection</h3>
 <h1>Musics page</h1>
+@if (errorMessage!=null)
+{
+    <p>@errorMessage</p>
+}
+
+
+@if (artists.Count>0){
+
+<p>Enter song</p>
+    <p>Title:</p>
+<input id="title" placeholder="Enter name" @bind="songName"/>
+    <p>Date:</p>
+<input type="date" name="date" id="date" @bind="date" />
+    <p>Enter Minutes:</p>
+<input type="number" min="0"  @bind="minDuration"/>
+    <p>Enter Seconds:</p>
+<input type="number" min="0" @bind="secDuration" />
+    <p>Genre:</p>
+<input id="genre" name="genre" @bind="musicGenre" />
+<br />
+
+
+
+
+<label>choose Artist here</label>
+<select class="custom-select" title="select artist " @bind="artistId">
+	<option value="Select" selected disabled="disabled">Choose Artist</option>
+	@foreach (Artists c in artists)
+	{
+		<option value="@c.id">@c.artist_Name</option>
+	}
+</select>
+<br />
+<button @onclick=putSongs > Put songs </button>
+
+}
+
+
+
 <button @onclick="getMusics"> get Songs</button>
 @if (songs!=null)
 {
@@ -12,7 +52,6 @@
 	<p>@s.releaseDate</p>
 	<p>@s.duration</p>
 	<p>@s.genre</p>
-	<br />
 		@foreach (Class2 artsong in artsont)
 		{
 			@if(s.id==artsong.song_Id){
@@ -22,6 +61,7 @@
 					{
 						<p>Artistname:</p>
 						<p>@a.artist_Name</p>
+                        <br />
 					}
 
 }
@@ -32,57 +72,180 @@
 
 
 @code {
-	string searchValue = null;
-	Class1[] songs = null;
-	Class2[] songsArtists= null;
-	List<Class2> artsont = new List<Class2>();
-	List<Artists> artists = new List<Artists>();
-	public void getMusics()
-	{
-		var client = new RestClient("https://localhost:7002/api/Songs/Song");
-		var request = new RestRequest();
-		var response = client.Execute(request);
-		if (response != null)
-		{
-			songs = JsonSerializer.Deserialize<Class1 [] >(response.Content);
-		}
-		//https://localhost:7002/api/Artists_Songs/Artists_Songs/1
-		if (songs!=null)
-		{
-			for (var i=0; i<songs.Length; i++)
-			{
+    string errorMessage = null;
+    int artistId = 0;
+    string songName = null;
+    int minDuration = 0;
+    int  secDuration = 0;
+    string musicGenre = null;
+    DateTime date = new DateTime();
 
-				var client2 = new RestClient("https://localhost:7002/api/Artists_Songs/Artists_Songs/" + songs[i].id);
-				var request2 = new RestRequest();
-				var response2 = client2.Execute(request2);
-				if (response2 != null)
-				{
-					Class2 [] artsong = JsonSerializer.Deserialize<Class2[]>(response2.Content);
-					for (var x = 0; x < artsong.Length; x++)
-					{
-						artsont.Add(artsong[i]);
-					}
-						}
-					}
-		}
-			if (songsArtists!=null)
-			{
-				for (var i = 0; i < songsArtists.Length; i++)
-				{
-					var client3 = new RestClient("https://localhost:7002/api/Artists/Artists/" + songsArtists[i].artist_Id);
-					var request3 = new RestRequest();
-					var response3 = client3.Execute(request3);
-					if (response3 != null)
-					{
-						Artists artist = JsonSerializer.Deserialize<Artists>(response3.Content);
-						artists.Add(artist);
-					}
-				}
-				
-			}
-		
-		//searchValue = "hello";
+    string searchValue = null;
+    Class1[] songs = null;
+    Class2[] songsArtists= null;
+    List<Class2> artsont = new List<Class2>();
+    List<Artists> artists = new List<Artists>();
+    public void getMusics()
+    {
+        // errorMessage = null;
+        var client = new RestClient("https://localhost:7002/api/Songs/Song");
+        var request = new RestRequest();
+        var response = client.Execute(request);
+        if (response != null)
+        {
+            songs = JsonSerializer.Deserialize<Class1 [] >(response.Content);
+        }
+        //https://localhost:7002/api/Artists_Songs/Artists_Songs/1
+        if (songs!=null)
+        {
+            artsont.Clear();
+            for (var i=0; i<songs.Length; i++)
+            {
 
-	}
+                var client2 = new RestClient("https://localhost:7002/api/Artists_Songs/Artists_Songs/" + songs[i].id);
+                var request2 = new RestRequest();
+                var response2 = client2.Execute(request2);
+                if (response2 != null)
+                {
+                    Class2 [] artsong = JsonSerializer.Deserialize<Class2[]>(response2.Content);
 
-}
+                    for (var x = 0; x < artsong.Length; x++)
+                    {
+                        artsont.Add(artsong[x]);
+                    }
+                }
+            }
+        }
+        if (artsont != null)
+        {
+            artists.Clear();
+            for (var i = 0; i < artsont.Count; i++)
+            {
+                var client3 = new RestClient("https://localhost:7002/api/Artists/Artists/" + artsont[i].artist_Id);
+                var request3 = new RestRequest();
+                var response3 = client3.Execute(request3);
+                if (response3 != null)
+                {
+
+                    Artists artist = JsonSerializer.Deserialize<Artists>(response3.Content);
+
+                    bool add = true;
+                    //make sure artist is unique before adding 
+                    foreach (Artists c in artists)
+                    {
+                        if (c.id==artist.id)
+                        {
+                            add = false;
+                            break;
+                        }
+                    }
+                    if (add==true)
+                    {
+                        artists.Add(artist);
+                    }
+
+                }
+            }
+
+        }
+
+      
+
+    }
+    public async void putSongs()
+    {
+        errorMessage = null;
+        if (songName != null && musicGenre != null && songName != null && artistId!=0)
+        {
+            if (songName.Trim() != null && musicGenre.Trim() != null && songName.Trim() != null)
+            {
+                if (minDuration > 0 && secDuration > 0 || secDuration > 0 || minDuration>0)
+                {
+                    Class1 result = null;
+                    Class1 song = new Class1()
+                        {
+                            title = songName,
+                            duration = new TimeSpan(0, minDuration, secDuration),
+                            genre = musicGenre,
+                            releaseDate = date
+                        };
+
+                    HttpClient client1 = new HttpClient();
+
+                        string url = "https://localhost:7002/api/Songs";
+                     
+                        //store jsondata
+                        string jsonData = Newtonsoft.Json.JsonConvert.SerializeObject(song);
+                        CancellationToken cancellationToken = CancellationToken.None;
+                        // Create the HttpContent from the JSON string
+                        var content1 = new StringContent(jsonData, Encoding.UTF8, "application/json");
+                        HttpResponseMessage response1 = await client1.PostAsync(url, content1, cancellationToken);
+                        string responseContent = await response1.Content.ReadAsStringAsync();
+
+                        if (responseContent != null)
+                        {
+                            Console.WriteLine("Response: " + responseContent);
+                            //convert to a song
+                            result = Newtonsoft.Json.JsonConvert.DeserializeObject<Class1>(responseContent);
+                        //create an Artists_Songs
+                            Artists_Songs at = new Artists_Songs()
+                                {
+                                    Song_Id = result.id,
+                                    Artist_Id = artistId
+                                };
+                            string url2 = "https://localhost:7002/api/Artists_Songs";
+                            HttpClient client2 = new HttpClient();
+                            string jsonData2 = Newtonsoft.Json.JsonConvert.SerializeObject(at);
+                            var content2 = new StringContent(jsonData2, Encoding.UTF8, "application/json");
+                            HttpResponseMessage response2 = await client1.PostAsync(url2, content2, cancellationToken);
+                            string responseContent2 = await response2.Content.ReadAsStringAsync();
+                            if (responseContent2 != null)
+                            {
+                                Console.WriteLine("artist songs: " + responseContent2);
+                                errorMessage = "song added succefully";
+                                getMusics();
+
+                            }
+                            else
+                            {
+                                errorMessage = "could not add song";
+                            }
+
+
+
+                        }
+                        else
+                        {
+                            errorMessage = "could not add song";
+                        }
+
+
+                        
+                    
+
+
+
+
+
+
+                }
+                else
+                {
+                    errorMessage = "Please enter a valid duration";
+                }
+            }
+            else
+            {
+                errorMessage = "Please choose an artist and fill in required details";
+            }
+        }
+        else
+        {
+            errorMessage = "Please choose an artist and fill in required details";
+        }
+
+
+            }
+        }
+        
+
