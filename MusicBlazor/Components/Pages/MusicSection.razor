@@ -4,87 +4,90 @@
 
 <h3>MusicSection</h3>
 <h1>Musics page</h1>
-@if (errorMessage!=null)
+
+@if (errorMessage != null)
 {
-    <p>@errorMessage</p>
+    <p class="error">@errorMessage</p>
 }
 
-
-@if (artists.Count>0){
-
-<p>Enter song</p>
-    <p>Title:</p>
-<input id="title" placeholder="Enter name" @bind="songName"/>
-    <p>Date:</p>
-<input type="date" name="date" id="date" @bind="date" />
-    <p>Enter Minutes:</p>
-<input type="number" min="0"  @bind="minDuration"/>
-    <p>Enter Seconds:</p>
-<input type="number" min="0" @bind="secDuration" />
-    <p>Genre:</p>
-<input id="genre" name="genre" @bind="musicGenre" />
-<br />
-
-
-
-
-<label>choose Artist here</label>
-<select class="custom-select" title="select artist " @bind="artistId">
-	<option value="Select" selected disabled="disabled">Choose Artist</option>
-	@foreach (Artists c in artists)
-	{
-		<option value="@c.id">@c.artist_Name</option>
-	}
-</select>
-<br />
-<button @onclick=putSongs > Put songs </button>
-
-}
-
-
-
-<button @onclick="getMusics"> get Songs</button>
-@if (songs!=null)
+@if (artists.Count > 0)
 {
-	@foreach (Class1 s in songs)
+    <div class="form-container">
+        <p>Enter song</p>
+        <label for="title">Title:</label>
+        <input id="title" class="input-field" placeholder="Enter name" @bind="songName" />
+        
+        <label for="date">Date:</label>
+        <input type="date" class="input-field" name="date" id="date" @bind="date" />
+        
+        <label for="minDuration">Enter Minutes:</label>
+        <input type="number" class="input-field" min="0" @bind="minDuration" />
+        
+        <label for="secDuration">Enter Seconds:</label>
+        <input type="number" class="input-field" min="0" @bind="secDuration" />
+        
+        <label for="genre">Genre:</label>
+        <input id="genre" class="input-field" name="genre" @bind="musicGenre" />
+        
+        <label for="artist">Choose Artist:</label>
+        <select class="custom-select" title="select artist" @bind="artistId">
+            <option value="Select" selected disabled="disabled">Choose Artist</option>
+            @foreach (Artists c in artists)
+            {
+                <option value="@c.id">@c.artist_Name</option>
+            }
+        </select>
+        
+        <button class="action-button" @onclick="putSongs">Put songs</button>
+    </div>
+}
+
+<button class="action-button" @onclick="getMusics">Get Songs</button>
+
+@if (songs != null)
 {
-	<p>@s.title</p>
-	<p>@s.releaseDate</p>
-	<p>@s.duration</p>
-	<p>@s.genre</p>
-		@foreach (Class2 artsong in artsont)
-		{
-			@if(s.id==artsong.song_Id){
-				@foreach (Artists a in artists)
-				{
-					@if (artsong.artist_Id == a.id)
-					{
-						<p>Artistname:</p>
-						<p>@a.artist_Name</p>
-                        <br />
-					}
-
+    <div class="song-list">
+        @foreach (Class1 s in songs)
+        {
+            <div class="song-card">
+                <p><strong>Title:</strong> @s.title</p>
+                <p><strong>Release Date:</strong> @s.releaseDate</p>
+                <p><strong>Duration:</strong> @s.duration</p>
+                <p><strong>Genre:</strong> @s.genre</p>
+                
+                @foreach (Class2 artsong in artsont)
+                {
+                    @if (s.id == artsong.song_Id)
+                    {
+                        @foreach (Artists a in artists)
+                        {
+                            @if (artsong.artist_Id == a.id)
+                            {
+                                <p><strong>Artist Name:</strong> @a.artist_Name</p>
+                            }
+                        }
+                    }
+                }
+            </div>
+        }
+    </div>
 }
-			}
-		}
-}
-}
-
 
 @code {
     string errorMessage = null;
     int artistId = 0;
     string songName = null;
     int minDuration = 0;
-    int  secDuration = 0;
+    int secDuration = 0;
     string musicGenre = null;
     DateTime date = new DateTime();
 
     string searchValue = null;
     Class1[] songs = null;
-    Class2[] songsArtists= null;
+    Class2[] songsArtists = null;
     List<Class2> artsont = new List<Class2>();
     List<Artists> artists = new List<Artists>();
+
     public void getMusics()
     {
         // errorMessage = null;
@@ -93,21 +96,20 @@
         var response = client.Execute(request);
         if (response != null)
         {
-            songs = JsonSerializer.Deserialize<Class1 [] >(response.Content);
+            songs = JsonSerializer.Deserialize<Class1[]>(response.Content);
         }
         //https://localhost:7002/api/Artists_Songs/Artists_Songs/1
-        if (songs!=null)
+        if (songs != null)
         {
             artsont.Clear();
-            for (var i=0; i<songs.Length; i++)
+            for (var i = 0; i < songs.Length; i++)
             {
-
                 var client2 = new RestClient("https://localhost:7002/api/Artists_Songs/Artists_Songs/" + songs[i].id);
                 var request2 = new RestRequest();
                 var response2 = client2.Execute(request2);
                 if (response2 != null)
                 {
-                    Class2 [] artsong = JsonSerializer.Deserialize<Class2[]>(response2.Content);
+                    Class2[] artsong = JsonSerializer.Deserialize<Class2[]>(response2.Content);
 
                     for (var x = 0; x < artsong.Length; x++)
                     {
@@ -126,108 +128,88 @@
                 var response3 = client3.Execute(request3);
                 if (response3 != null)
                 {
-
                     Artists artist = JsonSerializer.Deserialize<Artists>(response3.Content);
 
                     bool add = true;
-                    //make sure artist is unique before adding 
+                    // make sure artist is unique before adding
                     foreach (Artists c in artists)
                     {
-                        if (c.id==artist.id)
+                        if (c.id == artist.id)
                         {
                             add = false;
                             break;
                         }
                     }
-                    if (add==true)
+                    if (add == true)
                     {
                         artists.Add(artist);
                     }
-
                 }
             }
-
         }
-
-      
-
     }
+
     public async void putSongs()
     {
         errorMessage = null;
-        if (songName != null && musicGenre != null && songName != null && artistId!=0)
+        if (songName != null && musicGenre != null && songName != null && artistId != 0)
         {
             if (songName.Trim() != null && musicGenre.Trim() != null && songName.Trim() != null)
             {
-                if (minDuration > 0 && secDuration > 0 || secDuration > 0 || minDuration>0)
+                if (minDuration > 0 && secDuration > 0 || secDuration > 0 || minDuration > 0)
                 {
                     Class1 result = null;
                     Class1 song = new Class1()
-                        {
-                            title = songName,
-                            duration = new TimeSpan(0, minDuration, secDuration),
-                            genre = musicGenre,
-                            releaseDate = date
-                        };
+                    {
+                        title = songName,
+                        duration = new TimeSpan(0, minDuration, secDuration),
+                        genre = musicGenre,
+                        releaseDate = date
+                    };
 
                     HttpClient client1 = new HttpClient();
+                    string url = "https://localhost:7002/api/Songs";
 
-                        string url = "https://localhost:7002/api/Songs";
-                     
-                        //store jsondata
-                        string jsonData = Newtonsoft.Json.JsonConvert.SerializeObject(song);
-                        CancellationToken cancellationToken = CancellationToken.None;
-                        // Create the HttpContent from the JSON string
-                        var content1 = new StringContent(jsonData, Encoding.UTF8, "application/json");
-                        HttpResponseMessage response1 = await client1.PostAsync(url, content1, cancellationToken);
-                        string responseContent = await response1.Content.ReadAsStringAsync();
+                    // store jsondata
+                    string jsonData = Newtonsoft.Json.JsonConvert.SerializeObject(song);
+                    CancellationToken cancellationToken = CancellationToken.None;
+                    // Create the HttpContent from the JSON string
+                    var content1 = new StringContent(jsonData, Encoding.UTF8, "application/json");
+                    HttpResponseMessage response1 = await client1.PostAsync(url, content1, cancellationToken);
+                    string responseContent = await response1.Content.ReadAsStringAsync();
 
-                        if (responseContent != null)
+                    if (responseContent != null)
+                    {
+                        Console.WriteLine("Response: " + responseContent);
+                        // convert to a song
+                        result = Newtonsoft.Json.JsonConvert.DeserializeObject<Class1>(responseContent);
+                        // create an Artists_Songs
+                        Artists_Songs at = new Artists_Songs()
                         {
-                            Console.WriteLine("Response: " + responseContent);
-                            //convert to a song
-                            result = Newtonsoft.Json.JsonConvert.DeserializeObject<Class1>(responseContent);
-                        //create an Artists_Songs
-                            Artists_Songs at = new Artists_Songs()
-                                {
-                                    Song_Id = result.id,
-                                    Artist_Id = artistId
-                                };
-                            string url2 = "https://localhost:7002/api/Artists_Songs";
-                            HttpClient client2 = new HttpClient();
-                            string jsonData2 = Newtonsoft.Json.JsonConvert.SerializeObject(at);
-                            var content2 = new StringContent(jsonData2, Encoding.UTF8, "application/json");
-                            HttpResponseMessage response2 = await client1.PostAsync(url2, content2, cancellationToken);
-                            string responseContent2 = await response2.Content.ReadAsStringAsync();
-                            if (responseContent2 != null)
-                            {
-                                Console.WriteLine("artist songs: " + responseContent2);
-                                errorMessage = "song added succefully";
-                                getMusics();
-
-                            }
-                            else
-                            {
-                                errorMessage = "could not add song";
-                            }
-
-
-
+                            Song_Id = result.id,
+                            Artist_Id = artistId
+                        };
+                        string url2 = "https://localhost:7002/api/Artists_Songs";
+                        HttpClient client2 = new HttpClient();
+                        string jsonData2 = Newtonsoft.Json.JsonConvert.SerializeObject(at);
+                        var content2 = new StringContent(jsonData2, Encoding.UTF8, "application/json");
+                        HttpResponseMessage response2 = await client1.PostAsync(url2, content2, cancellationToken);
+                        string responseContent2 = await response2.Content.ReadAsStringAsync();
+                        if (responseContent2 != null)
+                        {
+                            Console.WriteLine("artist songs: " + responseContent2);
+                            errorMessage = "Song added successfully!";
+                            getMusics();
                         }
                         else
                         {
-                            errorMessage = "could not add song";
+                            errorMessage = "Could not add song";
                         }
-
-
-                        
-                    
-
-
-
-
-
-
+                    }
+                    else
+                    {
+                        errorMessage = "Could not add song";
+                    }
                 }
                 else
                 {
@@ -243,9 +225,95 @@
         {
             errorMessage = "Please choose an artist and fill in required details";
         }
+    }
+}
 
+<style>
+    body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f9f9f9;
+        color: #333;
+        margin: 0;
+        padding: 0;
+    }
 
-            }
+    h1 {
+        text-align: center;
+        color: #2c3e50;
+        margin-top: 20px;
+    }
+
+    .error {
+        color: #e74c3c;
+        font-weight: bold;
+        text-align: center;
+        margin: 10px;
+    }
+
+    .form-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 20px;
+        padding: 20px;
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .input-field, .custom-select {
+        width: 100%;
+        max-width: 300px;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        font-size: 1rem;
+    }
+
+    .action-button {
+        background-color: #3498db;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin: 10px 0;
+    }
+
+        .action-button:hover {
+            background-color: #2980b9;
         }
-        
 
+    .song-list {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin: 20px;
+    }
+
+    .song-card {
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 15px;
+        margin: 10px;
+        width: 300px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+        .song-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .song-card p {
+            margin: 10px 0;
+        }
+
+        .song-card h4 {
+            color: #3498db;
+            font-size: 1.2rem;
+        }
+</style>
